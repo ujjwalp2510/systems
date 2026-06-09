@@ -805,3 +805,327 @@ Locks
 ```
 
 All layers work together to maintain correctness.
+
+# Chapter 3.25 — Nginx Deep Dive
+
+## What Is Nginx?
+
+Nginx is a highly optimized network server.
+
+Important realization:
+
+Nginx is simply a program.
+
+Just like:
+
+- Node.js
+- PostgreSQL
+- Redis
+- Chrome
+
+are programs.
+
+Nginx specializes in managing network traffic.
+
+---
+
+## Mental Model
+
+Most people say:
+
+```text
+Nginx = Reverse Proxy
+```
+
+A better mental model:
+
+```text
+Nginx = Traffic Manager
+```
+
+Architecture:
+
+```text
+Internet
+↓
+Nginx
+↓
+Application Servers
+```
+
+---
+
+## Why Does Nginx Exist?
+
+Without Nginx:
+
+```text
+Browser
+↓
+Node.js
+```
+
+Application servers become responsible for:
+
+- TLS
+- Traffic management
+- Routing
+- Load balancing
+- Connection handling
+
+This mixes infrastructure concerns with business logic.
+
+---
+
+## Public-Facing Ports
+
+Typical setup:
+
+```text
+Nginx
+├── Port 80
+└── Port 443
+
+Node.js
+└── Port 3000
+```
+
+Users connect to:
+
+```text
+myapp.com
+```
+
+not:
+
+```text
+myapp.com:3000
+```
+
+Nginx receives public traffic and forwards it internally.
+
+---
+
+## Reverse Proxy
+
+Example:
+
+```text
+Browser
+↓
+GET /products
+↓
+Nginx
+↓
+Node.js
+```
+
+Nginx forwards nearly the same request to the backend.
+
+Additional metadata may be attached.
+
+Examples:
+
+```http
+X-Forwarded-For
+X-Forwarded-Proto
+```
+
+---
+
+## TLS Termination
+
+HTTPS Flow:
+
+```text
+Browser
+↓ HTTPS
+Nginx
+↓ HTTP
+Node.js
+```
+
+Nginx handles:
+
+- Certificates
+- TLS Handshakes
+- Encryption
+
+Backend applications can remain simple.
+
+---
+
+## Request Routing
+
+Example:
+
+```text
+/users
+↓
+User Service
+
+/payments
+↓
+Payment Service
+
+/inventory
+↓
+Inventory Service
+```
+
+Users see:
+
+```text
+amazon.com
+```
+
+Nginx decides where requests go internally.
+
+---
+
+## Load Balancing
+
+Architecture:
+
+```text
+Nginx
+↓
+Node1
+Node2
+Node3
+```
+
+Nginx distributes traffic among multiple backend servers.
+
+Benefits:
+
+- Higher throughput
+- Better fault tolerance
+- Horizontal scaling
+
+---
+
+## Health Checks
+
+Goal:
+
+Avoid sending traffic to failed servers.
+
+Example:
+
+```text
+Nginx
+↓
+GET /health
+↓
+Node Server
+```
+
+Healthy:
+
+```text
+200 OK
+```
+
+Unhealthy:
+
+```text
+500
+Timeout
+No Response
+```
+
+Unhealthy servers stop receiving traffic.
+
+---
+
+## Responsibilities Separation
+
+### Node.js
+
+Focus on:
+
+- Business Logic
+- Authentication
+- Database Access
+- Domain Rules
+
+### Nginx
+
+Focus on:
+
+- Traffic Management
+- Routing
+- TLS
+- Load Balancing
+- Connection Handling
+
+---
+
+## Restaurant Analogy
+
+```text
+Chef
+=
+Node.js
+
+Reception Manager
+=
+Nginx
+```
+
+The chef cooks.
+
+The reception manager:
+
+- Receives customers
+- Organizes traffic
+- Assigns tables
+- Manages queues
+
+The chef should not perform reception duties.
+
+---
+
+## Local Experiment
+
+Architecture:
+
+```text
+Browser
+↓
+localhost:80
+↓
+Nginx
+↓
+localhost:3000
+↓
+Node.js
+```
+
+Steps:
+
+1. Install Nginx.
+2. Run Node app on port 3000.
+3. Configure proxy_pass.
+4. Access localhost.
+5. Verify traffic reaches Node through Nginx.
+
+Learning Outcomes:
+
+- Reverse Proxy
+- Port Mapping
+- Request Forwarding
+- Traffic Management
+
+Future:
+
+```text
+Nginx
+↓
+3001
+3002
+3003
+```
+
+Observe load balancing behavior.
