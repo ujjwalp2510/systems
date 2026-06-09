@@ -1,4 +1,4 @@
-# Chapter 1.5 - System Thinking Foundations
+# Chapter 2 - System Thinking Foundations
 
 These are not purely networking concepts.
 
